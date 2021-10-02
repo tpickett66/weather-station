@@ -1,10 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include "U8x8lib.h"
-#include "../.pio/libdeps/esp32dev/U8g2/src/U8x8lib.h"
 
+#include "U8x8lib.h"
 #include "SparkFunBME280.h"
-#include "../.pio/libdeps/esp32dev/SparkFun BME280/src/SparkFunBME280.h"
 
 U8X8_SH1106_128X64_NONAME_HW_I2C u8x8(U8X8_PIN_NONE);
 
