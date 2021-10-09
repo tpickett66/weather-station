@@ -1,15 +1,28 @@
+#include <cstdio>
+
 #include <Arduino.h>
+#include <SparkFunBME280.h>
+#include <U8x8lib.h>
 #include <Wire.h>
 
-#include "U8x8lib.h"
-#include "SparkFunBME280.h"
+#include "main.h"
+
 
 U8X8_SH1106_128X64_NONAME_HW_I2C u8x8(U8X8_PIN_NONE);
 
 #define BME_CHIP_ID 0x60
 BME280 bme280;
 struct BME280_SensorMeasurements measurements;
+struct ReadingPackage readings;
 bool sensor_has_humidity;
+
+
+unsigned long millisBetweenReads = 10000;
+unsigned long nextReadMillis = 0;
+unsigned int readCount = 0;
+
+int displayReadings(ReadingPackage *, unsigned int);
+int takeReadings(ReadingPackage *);
 
 void setup() {
     Wire.begin();
@@ -24,36 +37,42 @@ void setup() {
         while(true);
     };
     bme280.setMode(MODE_SLEEP);
+    // TODO: Remove this silly flag once we're using a dedicated temperature and humidity sensor.
     sensor_has_humidity = bme280.readRegister(BME280_CHIP_ID_REG) == BME_CHIP_ID;
 
     u8x8.drawUTF8(0, 0, "Temp:      °C");
-    u8x8.drawString(0, 2, "  RH:");
+    u8x8.drawString(2, 2, "RH:");
     u8x8.drawString(0,4, "Pres:       kPa");
+    u8x8.drawString(1,6, "Cnt:");
 }
 
 void loop() {
-    bme280.setMode(MODE_FORCED); //Wake up sensor and take reading
-    while(!bme280.isMeasuring()) ; //Wait for sensor to start measurement
-    while(bme280.isMeasuring()) ; //Hang out while sensor completes the reading
+    unsigned long now = millis();
+    if (now >= nextReadMillis) {
+        takeReadings(&readings);
+        readCount++;
+        displayReadings(&readings, readCount);
 
-    bme280.readAllMeasurements(&measurements, 0);
+        nextReadMillis = now + millisBetweenReads;
+    }
+}
 
+int displayReadings(ReadingPackage * package, unsigned int readingsTaken) {
     String temp;
-
-    if (measurements.temperature >= 100 || measurements.temperature < 0) {
-        temp = String(measurements.temperature, 1);
+    if (package->temperature >= 100 || package->temperature < 0) {
+        temp = String(package->temperature, 1);
     } else {
-        temp = String(measurements.temperature, 2);
+        temp = String(package->temperature, 2);
     }
     u8x8.drawUTF8(6, 0, temp.c_str());
 
     if (sensor_has_humidity) {
-        String humidity = String(measurements.humidity, 0);
+        String humidity = String(package->humidity, 0);
         humidity.concat(F("%"));
         u8x8.drawString(6, 2, humidity.c_str());
     }
 
-    float kpa = measurements.pressure/1000;
+    float kpa = package->pressure/1000;
     String pressure;
     if (kpa >= 100) {
         pressure = String(kpa, 1);
@@ -62,5 +81,28 @@ void loop() {
     }
     u8x8.drawString(6,4, pressure.c_str());
 
-    delay(10000);
+    char count[20];
+    sprintf(count, "%d", readingsTaken);
+    u8x8.drawString(6, 6, count);
+    
+    return 0;
+}
+
+int takeReadings(ReadingPackage * package) {
+    bme280.setMode(MODE_FORCED); //Wake up sensor and take reading
+    while(!bme280.isMeasuring()) ; //Wait for sensor to start measurement
+    while(bme280.isMeasuring()) ; //Hang out while sensor completes the reading
+
+    bme280.readAllMeasurements(&measurements, 0);
+    package->temperature = measurements.temperature;
+    package->pressure = measurements.pressure;
+    
+    // TODO: Remove this silly flag once we're using a dedicated temperature and humidity sensor.
+    if (sensor_has_humidity) {
+        package->humidity = measurements.humidity;
+    } else {
+        package->humidity = -1.0;
+    }
+    
+    return 0;
 }
