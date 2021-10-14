@@ -6,7 +6,8 @@
 #include <Wire.h>
 
 #include "main.h"
-
+#include "SerialConsole.h"
+#include "WSPreferences.h"
 
 U8X8_SH1106_128X64_NONAME_HW_I2C u8x8(U8X8_PIN_NONE);
 
@@ -16,15 +17,20 @@ struct BME280_SensorMeasurements measurements;
 struct ReadingPackage readings;
 bool sensor_has_humidity;
 
-
 unsigned long millisBetweenReads = 10000;
 unsigned long nextReadMillis = 0;
 unsigned int readCount = 0;
 
+WSPreferences preferences;
+SerialConsole console(&Serial, &preferences);
 int displayReadings(ReadingPackage *, unsigned int);
 int takeReadings(ReadingPackage *);
 
 void setup() {
+    preferences.begin();
+    Serial.begin(115200);
+    console.begin();
+
     Wire.begin();
     Wire.setClock(400000);
 
@@ -55,6 +61,7 @@ void loop() {
 
         nextReadMillis = now + millisBetweenReads;
     }
+    console.runOnce(100);
 }
 
 int displayReadings(ReadingPackage * package, unsigned int readingsTaken) {
