@@ -26,9 +26,9 @@ size_t SerialConsole::begin() {
 void SerialConsole::runOnce(size_t timeout) {
     char received;
 
-    size_t expiration = millis() + timeout;
+    size_t start = millis();
 
-    while (serial->available() > 0 && millis() < expiration) {
+    while (serial->available() > 0 && millis() - start < timeout) {
         received = serial->read();
 
         if (received == NEWLINE) {

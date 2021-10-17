@@ -17,8 +17,8 @@ struct BME280_SensorMeasurements measurements;
 struct ReadingPackage readings;
 bool sensor_has_humidity;
 
-unsigned long millisBetweenReads = 10000;
-unsigned long nextReadMillis = 0;
+size_t millisBetweenReads = 10000;
+size_t lastReadMillis = -20000; // Initialize the last reading to be in the past, so we get a reading right away.
 unsigned int readCount = 0;
 
 WSPreferences preferences;
@@ -54,12 +54,11 @@ void setup() {
 
 void loop() {
     unsigned long now = millis();
-    if (now >= nextReadMillis) {
+    if (now - lastReadMillis >= millisBetweenReads) {
         takeReadings(&readings);
         readCount++;
         displayReadings(&readings, readCount);
-
-        nextReadMillis = now + millisBetweenReads;
+        lastReadMillis = now;
     }
     console.runOnce(100);
 }
