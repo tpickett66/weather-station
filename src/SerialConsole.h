@@ -28,12 +28,28 @@ const __FlashStringHelper *const banner = F("              .\n\n"
                       "=============================\n"
                       "Weather Station welcomes you!\n");
 
+const __FlashStringHelper *const helpText = F("------------------------------\n"
+                                              "help  - print this message\n"
+                                              "reset - restart the system\n"
+                                              "ssid  - edit WiFi SSID\n");
+
+enum STATE {
+    WAITING_FOR_COMMAND,
+    WAITING_FOR_INPUT,
+    PROCESSING_COMMAND
+};
+
 class SerialConsole {
 private:
     WSPreferences *preferences;
     Stream *serial;
     char recvBuffer[255];
     size_t recvBytes;
+
+    STATE state;
+    char command[4];
+
+    size_t commandReceived();
 
 public:
     SerialConsole(Stream *s, WSPreferences *prefs);

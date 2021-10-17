@@ -15,6 +15,7 @@ SerialConsole::SerialConsole(Stream *s, WSPreferences *prefs) {
     this->serial = s;
 
     this->recvBytes = 0;
+    this->state = WAITING_FOR_COMMAND;
 }
 
 size_t SerialConsole::begin() {
@@ -24,30 +25,40 @@ size_t SerialConsole::begin() {
 
 void SerialConsole::runOnce(size_t timeout) {
     char received;
-    Stream *s = this->serial;
 
     size_t expiration = millis() + timeout;
 
-    while (s->available() > 0 && millis() < expiration) {
-        received = s->read();
+    while (serial->available() > 0 && millis() < expiration) {
+        received = serial->read();
 
         if (received == NEWLINE) {
-            // check state and handle input appropriately
-            char output[this->recvBytes];
-            s->println(this->recvBytes);
-            this->recvBuffer[this->recvBytes] = '\0';
-            s->println(this->recvBuffer);
-            strcpy(output, this->recvBuffer);
-            s->println(output);
-            // reset receive
-            this->recvBytes = 0;
+            recvBuffer[recvBytes] = '\0'; // Make it easy to use string functions by making this look more like a string
+            if (state == WAITING_FOR_COMMAND) {
+                commandReceived();
+            } else if (state == WAITING_FOR_INPUT) {
+                // handleInput();
+            }
+
+            recvBytes = 0;
         } else {
-            this->recvBuffer[this->recvBytes] = received;
-            String val(this->recvBytes, 10);
-            val.concat(": ");
-            val.concat(received);
-            s->println(val.c_str());
-            this->recvBytes++;
+            recvBuffer[recvBytes] = received;
+            recvBytes++;
         }
     }
+}
+
+size_t SerialConsole::commandReceived() {
+    if (strcmp("help", recvBuffer) == 0) {
+        serial->println(helpText);
+    } else if (strcmp("reset", recvBuffer) == 0) {
+        ESP.restart(); // bye bye
+    } else {
+        char *unknownMessage;
+        unknownMessage = (char *)malloc(32);
+        snprintf(unknownMessage, 32, "Unknown command '%s'.", recvBuffer);
+        serial->println(unknownMessage);
+        serial->println(helpText);
+        free(unknownMessage);
+    }
+    return 0;
 }
