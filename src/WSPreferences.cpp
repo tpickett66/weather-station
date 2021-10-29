@@ -5,25 +5,35 @@
 #include "WSPreferences.h"
 
 bool WSPreferences::begin() {
-    Preferences p;
-    p.begin(PREFERENCES_NAMESPACE, false);
+    if (!preferences.begin(PREFERENCES_NAMESPACE, false)) {
+        log_e("Initializing inner preferences object failed!");
+    };
 
-    this->preferences = p;
     return true;
 }
 
+/* SSID methods */
 bool WSPreferences::wiFiSsidSet() {
-    return this->preferences.isKey(SSID_KEY);
+    return preferences.isKey(SSID_KEY);
 }
 
 size_t WSPreferences::wiFiSsidStore(char *ssid) {
-    auto bytesWritten = this->preferences.putString(SSID_KEY, ssid);
-    return bytesWritten > 0;
+    auto bytesWritten = preferences.putString(SSID_KEY, ssid);
+    return bytesWritten;
 }
 
 size_t WSPreferences::wiFiSsidLoad(char *buf) {
-    return this->preferences.getString(SSID_KEY, buf, 32);
+    if (wiFiSsidSet()) {
+        return preferences.getString(SSID_KEY, buf, 32);
+    } else {
+        return 0;
+    }
 }
+
+bool WSPreferences::wiFiSsidClear() {
+    return preferences.remove(SSID_KEY);
+}
+/* SSID methods */
 
 bool WSPreferences::wiFiPassSet() {
     return this->preferences.isKey(PASS_KEY);

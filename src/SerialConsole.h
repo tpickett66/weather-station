@@ -39,6 +39,11 @@ enum STATE {
     PROCESSING_COMMAND
 };
 
+enum COMMAND {
+    NO_COMMAND,
+    SSID,
+};
+
 class SerialConsole {
 private:
     WSPreferences *preferences;
@@ -47,9 +52,10 @@ private:
     size_t recvBytes;
 
     STATE state;
-    char command[4];
+    COMMAND command;
 
     size_t commandReceived();
+    size_t handleInput();
 
 public:
     SerialConsole(Stream *s, WSPreferences *prefs);

@@ -9,7 +9,6 @@
 #include <Preferences.h>
 
 #define PREFERENCES_NAMESPACE "weather-station"
-#define NOT_SET "not-set"
 
 #define SSID_KEY "ssid"
 #define PASS_KEY "wifipass"
@@ -49,6 +48,7 @@ public:
      * @return The number of bytes loaded into buf
      */
     size_t wiFiSsidLoad(char *buf);
+    bool wiFiSsidClear();
 
     bool wiFiPassSet();
     size_t wiFiPassStore(char *pass);

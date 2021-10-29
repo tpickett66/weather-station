@@ -3,12 +3,7 @@
 //
 
 #include "SerialConsole.h"
-/*
- * Commands:
- * h - help: print current contextual help
- * s - ssid: Set SSID
- * m - mqtt: configure MQTT (CA, Cert, Key)
- */
+
 
 SerialConsole::SerialConsole(Stream *s, WSPreferences *prefs) {
     this->preferences = prefs;
@@ -16,6 +11,7 @@ SerialConsole::SerialConsole(Stream *s, WSPreferences *prefs) {
 
     this->recvBytes = 0;
     this->state = WAITING_FOR_COMMAND;
+    this->command = NO_COMMAND;
 }
 
 size_t SerialConsole::begin() {
@@ -36,7 +32,7 @@ void SerialConsole::runOnce(size_t timeout) {
             if (state == WAITING_FOR_COMMAND) {
                 commandReceived();
             } else if (state == WAITING_FOR_INPUT) {
-                // handleInput();
+                handleInput();
             }
 
             recvBytes = 0;
@@ -48,10 +44,28 @@ void SerialConsole::runOnce(size_t timeout) {
 }
 
 size_t SerialConsole::commandReceived() {
-    if (strcmp("help", recvBuffer) == 0) {
+    if (strncmp("help", recvBuffer, 5) == 0) {
         serial->println(helpText);
-    } else if (strcmp("reset", recvBuffer) == 0) {
+    } else if (strncmp("reset", recvBuffer, 6) == 0) {
         ESP.restart(); // bye bye
+    } else if (strncmp("ssid", recvBuffer, 5) == 0) {
+        command = SSID;
+        state = WAITING_FOR_INPUT;
+        char *buf, *message;
+        size_t len;
+        buf = (char *) malloc(33);
+        len = preferences->wiFiSsidLoad(buf);
+        if (len > 0) {
+            message = (char *) malloc(len + 16);
+            snprintf(message, len + 16, "Current SSID: '%s'", buf);
+            serial->println(message);
+            free(message);
+        } else {
+            serial->println(F("SSID is currently unset."));
+        }
+        serial->println(
+                F("Enter a new SSID, press enter to keep current value or enter a zero (0) to clear the stored value."));
+        free(buf);
     } else {
         char *unknownMessage;
         unknownMessage = (char *)malloc(32);
@@ -60,5 +74,32 @@ size_t SerialConsole::commandReceived() {
         serial->println(helpText);
         free(unknownMessage);
     }
+    return 0;
+}
+
+size_t SerialConsole::handleInput() {
+    char *value;
+    value = (char*)malloc(recvBytes + 1);
+    strncpy(value, recvBuffer, recvBytes + 1);
+    switch (command) {
+        case NO_COMMAND:
+            break;
+        case SSID:
+            if (recvBytes == 0) {
+                serial->println("Retaining current value.");
+            } else if (strncmp("0", value, 2) == 0) {
+                preferences->wiFiSsidClear();
+                serial->println("Clearing stored value.");
+            } else {
+                serial->println(value);
+                preferences->wiFiSsidStore(value);
+                serial->printf("Saved '%s' as new SSID.", value);
+            }
+            command = NO_COMMAND;
+            state = WAITING_FOR_COMMAND;
+            break;
+    }
+    free(value);
+
     return 0;
 }
