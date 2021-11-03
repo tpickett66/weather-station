@@ -31,7 +31,12 @@ const __FlashStringHelper *const banner = F("              .\n\n"
 const __FlashStringHelper *const helpText = F("------------------------------\n"
                                               "help  - print this message\n"
                                               "reset - restart the system\n"
-                                              "ssid  - edit WiFi SSID\n");
+                                              "ssid  - edit WiFi SSID\n"
+                                              "pass  - edit WiFi Password\n");
+
+const __FlashStringHelper *const retainingText = F("Retaining current value.");
+
+const __FlashStringHelper *const clearingText = F("Clearing stored value.");
 
 enum STATE {
     WAITING_FOR_COMMAND,
@@ -42,6 +47,7 @@ enum STATE {
 enum COMMAND {
     NO_COMMAND,
     SSID,
+    WIPASS,
 };
 
 class SerialConsole {

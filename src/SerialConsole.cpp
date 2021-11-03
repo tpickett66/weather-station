@@ -66,6 +66,16 @@ size_t SerialConsole::commandReceived() {
         serial->println(
                 F("Enter a new SSID, press enter to keep current value or enter a zero (0) to clear the stored value."));
         free(buf);
+    } else if (strncmp("pass", recvBuffer, 5) == 0) {
+        command = WIPASS;
+        state = WAITING_FOR_INPUT;
+        if (preferences->wiFiPassSet()) {
+            serial->println(
+                    F("WiFi Password is currently set, enter a new value, press enter to keep current value, enter zero (0) to clear the current value."));
+        } else {
+            serial->println(
+                    F("WiFi Password is currently unset, please enter a value or press enter to leave unset."));
+        }
     } else {
         char *unknownMessage;
         unknownMessage = (char *)malloc(32);
@@ -86,14 +96,26 @@ size_t SerialConsole::handleInput() {
             break;
         case SSID:
             if (recvBytes == 0) {
-                serial->println("Retaining current value.");
+                serial->println(retainingText);
             } else if (strncmp("0", value, 2) == 0) {
                 preferences->wiFiSsidClear();
-                serial->println("Clearing stored value.");
+                serial->println(clearingText);
             } else {
-                serial->println(value);
                 preferences->wiFiSsidStore(value);
-                serial->printf("Saved '%s' as new SSID.", value);
+                serial->printf("Saved '%s' as new SSID.\n", value);
+            }
+            command = NO_COMMAND;
+            state = WAITING_FOR_COMMAND;
+            break;
+        case WIPASS:
+            if (recvBytes == 0) {
+                serial->println(retainingText);
+            } else if (strncmp("0", value, 2) == 0) {
+                preferences->wiFiPassClear();
+                serial->println(clearingText);
+            } else {
+                preferences->wiFiPassStore(value);
+                serial->println(F("Saving new WiFi Password."));
             }
             command = NO_COMMAND;
             state = WAITING_FOR_COMMAND;

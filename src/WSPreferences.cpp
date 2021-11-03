@@ -35,15 +35,24 @@ bool WSPreferences::wiFiSsidClear() {
 }
 /* SSID methods */
 
+/* WiFi Password methods */
 bool WSPreferences::wiFiPassSet() {
-    return this->preferences.isKey(PASS_KEY);
+    return preferences.isKey(PASS_KEY);
 }
 
 size_t WSPreferences::wiFiPassStore(char *pass) {
-    auto bytesWritten = this->preferences.putString(PASS_KEY, pass);
-    return bytesWritten > 0;
+    return preferences.putString(PASS_KEY, pass);
 }
 
 size_t WSPreferences::wiFiPassLoad(char *buf){
-    return this->preferences.getString(PASS_KEY, buf, 63);
+    if (wiFiPassSet()) {
+        return preferences.getString(PASS_KEY, buf, 63);
+    } else {
+        return 0;
+    }
 }
+
+bool WSPreferences::wiFiPassClear() {
+    return preferences.remove(PASS_KEY);
+}
+/* WiFi Password methods */

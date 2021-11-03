@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <SparkFunBME280.h>
 #include <U8x8lib.h>
+#include <WiFi.h>
 #include <Wire.h>
 
 #include "main.h"
@@ -31,9 +32,31 @@ void setup() {
     Serial.begin(115200);
     console.begin();
 
+    if (preferences.wiFiSsidSet() && preferences.wiFiPassSet()) {
+        size_t waits = 0;
+        char ssid[33], pass[64];
+        preferences.wiFiSsidLoad(&ssid[0]);
+        preferences.wiFiPassLoad(&pass[0]);
+
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(ssid, pass);
+        Serial.print("Connecting to WiFi ..");
+        while (WiFi.status() != WL_CONNECTED && waits < 20) {
+            Serial.print('.');
+            delay(500);
+            waits++;
+        }
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.printf("Connecting to WiFi failed (%d).\n", WiFi.status());
+            while (true);
+        }
+        Serial.println(WiFi.localIP());
+    }
+
     Wire.begin();
     Wire.setClock(400000);
 
+    // TODO: Scan I2C bus and determine what is plugged in.
     u8x8.begin();
     u8x8.setFont(u8x8_font_8x13_1x2_f);
 

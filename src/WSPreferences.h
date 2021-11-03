@@ -11,7 +11,7 @@
 #define PREFERENCES_NAMESPACE "weather-station"
 
 #define SSID_KEY "ssid"
-#define PASS_KEY "wifipass"
+#define PASS_KEY "wpass"
 
 class WSPreferences {
 private:
@@ -48,11 +48,17 @@ public:
      * @return The number of bytes loaded into buf
      */
     size_t wiFiSsidLoad(char *buf);
+
+    /**
+     * Clear the currently stored SSID
+     * @return Whether or not the SSID was successfully cleared.
+     */
     bool wiFiSsidClear();
 
     bool wiFiPassSet();
     size_t wiFiPassStore(char *pass);
     size_t wiFiPassLoad(char *buf);
+    bool wiFiPassClear();
 };
 
 
