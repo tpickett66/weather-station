@@ -1,9 +1,12 @@
 #include <cstdio>
 
 #include <Arduino.h>
+//#include <ESPmDNS.h>
+//#include <PubSubClient.h>
 #include <SparkFunBME280.h>
 #include <U8x8lib.h>
 #include <WiFi.h>
+//#include <WiFiClientSecure.h>
 #include <Wire.h>
 
 #include "main.h"
@@ -32,15 +35,26 @@ void setup() {
     Serial.begin(115200);
     console.begin();
 
+    WiFi.setAutoReconnect(true);
     if (preferences.wiFiSsidSet() && preferences.wiFiPassSet()) {
         size_t waits = 0;
         char ssid[33], pass[64];
-        preferences.wiFiSsidLoad(&ssid[0]);
-        preferences.wiFiPassLoad(&pass[0]);
+        preferences.wiFiSsidLoad(ssid);
+        preferences.wiFiPassLoad(pass);
+
+        char hostname[64];
+        preferences.wiFiHostLoad(hostname);
+        WiFi.setHostname(hostname);
+
+        Serial.print("Connecting to WiFi network '");
+        Serial.print(ssid);
+        Serial.print("' as '");
+        Serial.print(hostname);
+        Serial.print("' ..");
 
         WiFi.mode(WIFI_STA);
         WiFi.begin(ssid, pass);
-        Serial.print("Connecting to WiFi ..");
+
         while (WiFi.status() != WL_CONNECTED && waits < 20) {
             Serial.print('.');
             delay(500);
@@ -50,6 +64,7 @@ void setup() {
             Serial.printf("Connecting to WiFi failed (%d).\n", WiFi.status());
             while (true);
         }
+
         Serial.println(WiFi.localIP());
     }
 

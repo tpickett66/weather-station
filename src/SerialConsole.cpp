@@ -76,6 +76,24 @@ size_t SerialConsole::commandReceived() {
             serial->println(
                     F("WiFi Password is currently unset, please enter a value or press enter to leave unset."));
         }
+    } else if (strncmp("host", recvBuffer, 5) == 0) {
+        command = HOST;
+        state = WAITING_FOR_INPUT;
+        char *buf, *message;
+        size_t len;
+        buf = (char *) malloc(64);
+        len = preferences->wiFiHostLoad(buf);
+        if (len > 0) {
+            message = (char *) malloc(len + 20);
+            snprintf(message, len + 20, "Current Hostname: '%s'", buf);
+            serial->println(message);
+            free(message);
+        } else {
+            serial->println(F("Hostname is currently unset."));
+        }
+        serial->println(
+                F("Enter a new Hostname, press enter to keep current value or enter a zero (0) to clear the stored value."));
+        free(buf);
     } else {
         char *unknownMessage;
         unknownMessage = (char *)malloc(32);
@@ -89,15 +107,31 @@ size_t SerialConsole::commandReceived() {
 
 size_t SerialConsole::handleInput() {
     char *value;
+    if (recvBytes == 0) {
+        serial->println(retainingText);
+        command = NO_COMMAND;
+        state = WAITING_FOR_COMMAND;
+        return 0;
+    }
+
     value = (char*)malloc(recvBytes + 1);
     strncpy(value, recvBuffer, recvBytes + 1);
     switch (command) {
         case NO_COMMAND:
             break;
+        case HOST:
+            if (strncmp("0", value, 2) == 0) {
+                preferences->wiFiHostClear();
+                serial->println(clearingText);
+            } else {
+                preferences->wiFiHostStore(value);
+                serial->printf("Saved '%s' as new Hostname.\n", value);
+            }
+            command = NO_COMMAND;
+            state = WAITING_FOR_COMMAND;
+            break;
         case SSID:
-            if (recvBytes == 0) {
-                serial->println(retainingText);
-            } else if (strncmp("0", value, 2) == 0) {
+            if (strncmp("0", value, 2) == 0) {
                 preferences->wiFiSsidClear();
                 serial->println(clearingText);
             } else {
@@ -108,9 +142,7 @@ size_t SerialConsole::handleInput() {
             state = WAITING_FOR_COMMAND;
             break;
         case WIPASS:
-            if (recvBytes == 0) {
-                serial->println(retainingText);
-            } else if (strncmp("0", value, 2) == 0) {
+            if (strncmp("0", value, 2) == 0) {
                 preferences->wiFiPassClear();
                 serial->println(clearingText);
             } else {

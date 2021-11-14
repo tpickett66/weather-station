@@ -12,6 +12,7 @@
 
 #define SSID_KEY "ssid"
 #define PASS_KEY "wpass"
+#define HOST_KEY "host"
 
 class WSPreferences {
 private:
@@ -59,6 +60,11 @@ public:
     size_t wiFiPassStore(char *pass);
     size_t wiFiPassLoad(char *buf);
     bool wiFiPassClear();
+    
+    bool wiFiHostSet();
+    size_t wiFiHostStore(char *host);
+    size_t wiFiHostLoad(char *buf);
+    bool wiFiHostClear();
 };
 
 

@@ -32,7 +32,8 @@ const __FlashStringHelper *const helpText = F("------------------------------\n"
                                               "help  - print this message\n"
                                               "reset - restart the system\n"
                                               "ssid  - edit WiFi SSID\n"
-                                              "pass  - edit WiFi Password\n");
+                                              "pass  - edit WiFi Password\n"
+                                              "host  - edit WiFi Hostname\n");
 
 const __FlashStringHelper *const retainingText = F("Retaining current value.");
 
@@ -45,6 +46,7 @@ enum STATE {
 };
 
 enum COMMAND {
+    HOST,
     NO_COMMAND,
     SSID,
     WIPASS,

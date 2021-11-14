@@ -56,3 +56,26 @@ bool WSPreferences::wiFiPassClear() {
     return preferences.remove(PASS_KEY);
 }
 /* WiFi Password methods */
+
+/* WiFi Hostname methods */
+bool WSPreferences::wiFiHostSet() {
+    return preferences.isKey(HOST_KEY);
+}
+
+size_t WSPreferences::wiFiHostStore(char *host) {
+    return preferences.putString(HOST_KEY, host);
+}
+
+size_t WSPreferences::wiFiHostLoad(char *buf){
+    if (wiFiHostSet()) {
+        return preferences.getString(HOST_KEY, buf, 63);
+    } else {
+        strcpy(buf, "weather-station");
+        return 15;
+    }
+}
+
+bool WSPreferences::wiFiHostClear() {
+    return preferences.remove(HOST_KEY);
+}
+/* WiFi Hostname methods */
