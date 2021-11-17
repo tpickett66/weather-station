@@ -29,6 +29,7 @@ void SerialConsole::runOnce(size_t timeout) {
 
         if (received == NEWLINE) {
             recvBuffer[recvBytes] = '\0'; // Make it easy to use string functions by making this look more like a string
+            // TODO: This whole state machine could be way better make it so.
             if (state == WAITING_FOR_COMMAND) {
                 commandReceived();
             } else if (state == WAITING_FOR_INPUT) {
