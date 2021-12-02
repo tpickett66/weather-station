@@ -1,2 +1,15 @@
 .pio
 cmake-build*
+
+# KiCad backup files
+*.bak
+*.bck
+*.kicad_pcb-bak
+*.sch-bak
+
+# KiCad generated files
+*.erc
+*.net
+*-cache.lib
+*-rescue.lib
+*-cache
