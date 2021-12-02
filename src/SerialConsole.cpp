@@ -45,6 +45,10 @@ void SerialConsole::runOnce(size_t timeout) {
 }
 
 size_t SerialConsole::commandReceived() {
+    char buf[64];
+    char message[128];
+    size_t len;
+
     if (strncmp("help", recvBuffer, 5) == 0) {
         serial->println(helpText);
     } else if (strncmp("reset", recvBuffer, 6) == 0) {
@@ -52,21 +56,15 @@ size_t SerialConsole::commandReceived() {
     } else if (strncmp("ssid", recvBuffer, 5) == 0) {
         command = SSID;
         state = WAITING_FOR_INPUT;
-        char *buf, *message;
-        size_t len;
-        buf = (char *) malloc(33);
         len = preferences->wiFiSsidLoad(buf);
         if (len > 0) {
-            message = (char *) malloc(len + 16);
             snprintf(message, len + 16, "Current SSID: '%s'", buf);
             serial->println(message);
-            free(message);
         } else {
             serial->println(F("SSID is currently unset."));
         }
         serial->println(
                 F("Enter a new SSID, press enter to keep current value or enter a zero (0) to clear the stored value."));
-        free(buf);
     } else if (strncmp("pass", recvBuffer, 5) == 0) {
         command = WIPASS;
         state = WAITING_FOR_INPUT;
@@ -80,34 +78,25 @@ size_t SerialConsole::commandReceived() {
     } else if (strncmp("host", recvBuffer, 5) == 0) {
         command = HOST;
         state = WAITING_FOR_INPUT;
-        char *buf, *message;
-        size_t len;
-        buf = (char *) malloc(64);
         len = preferences->wiFiHostLoad(buf);
         if (len > 0) {
-            message = (char *) malloc(len + 20);
             snprintf(message, len + 20, "Current Hostname: '%s'", buf);
             serial->println(message);
-            free(message);
         } else {
             serial->println(F("Hostname is currently unset."));
         }
         serial->println(
                 F("Enter a new Hostname, press enter to keep current value or enter a zero (0) to clear the stored value."));
-        free(buf);
     } else {
-        char *unknownMessage;
-        unknownMessage = (char *)malloc(32);
-        snprintf(unknownMessage, 32, "Unknown command '%s'.", recvBuffer);
-        serial->println(unknownMessage);
+        snprintf(message, 32, "Unknown command '%s'.", recvBuffer);
+        serial->println(message);
         serial->println(helpText);
-        free(unknownMessage);
     }
     return 0;
 }
 
 size_t SerialConsole::handleInput() {
-    char *value;
+    char value[128];
     if (recvBytes == 0) {
         serial->println(retainingText);
         command = NO_COMMAND;
@@ -115,7 +104,6 @@ size_t SerialConsole::handleInput() {
         return 0;
     }
 
-    value = (char*)malloc(recvBytes + 1);
     strncpy(value, recvBuffer, recvBytes + 1);
     switch (command) {
         case NO_COMMAND:
@@ -154,7 +142,6 @@ size_t SerialConsole::handleInput() {
             state = WAITING_FOR_COMMAND;
             break;
     }
-    free(value);
 
     return 0;
 }
