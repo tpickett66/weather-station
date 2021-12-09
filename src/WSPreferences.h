@@ -13,6 +13,7 @@
 #define SSID_KEY "ssid"
 #define PASS_KEY "wpass"
 #define HOST_KEY "host"
+#define MQTT_HOST_KEY "mqtt"
 
 class WSPreferences {
 private:
@@ -65,6 +66,11 @@ public:
     size_t wiFiHostStore(char *host);
     size_t wiFiHostLoad(char *buf);
     bool wiFiHostClear();
+    
+    bool mqttHostSet();
+    size_t mqttHostStore(char *host);
+    size_t mqttHostLoad(char *buf);
+    bool mqttHostClear();
 };
 
 

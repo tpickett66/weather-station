@@ -50,6 +50,7 @@ enum COMMAND {
     NO_COMMAND,
     SSID,
     WIPASS,
+    MQTT_HOST,
 };
 
 class SerialConsole {

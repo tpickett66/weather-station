@@ -87,6 +87,18 @@ size_t SerialConsole::commandReceived() {
         }
         serial->println(
                 F("Enter a new Hostname, press enter to keep current value or enter a zero (0) to clear the stored value."));
+    } else if (strncmp("mqtt", recvBuffer, 5) == 0) {
+        command = MQTT_HOST;
+        state = WAITING_FOR_INPUT;
+        len = preferences->mqttHostLoad(&buf[0]);
+        if (len > 0) {
+            snprintf(&message[0], 22+len, "Current MQTT Host: '%s'", buf);
+            serial->println(message);
+        } else {
+            serial->println(F("MQTT host is currently unset."));
+        }
+        serial->println(
+                F("Enter a new Hostname, press enter to keep current value or enter a zero (0) to clear the stored value."));
     } else {
         snprintf(message, 32, "Unknown command '%s'.", recvBuffer);
         serial->println(message);
@@ -126,6 +138,17 @@ size_t SerialConsole::handleInput() {
             } else {
                 preferences->wiFiSsidStore(value);
                 serial->printf("Saved '%s' as new SSID.\n", value);
+            }
+            command = NO_COMMAND;
+            state = WAITING_FOR_COMMAND;
+            break;
+        case MQTT_HOST:
+            if (strncmp("0", value, 2) == 0) {
+                preferences->mqttHostClear();
+                serial->println(clearingText);
+            } else {
+                preferences->mqttHostStore(value);
+                serial->println(F("Saving new WiFi Password."));
             }
             command = NO_COMMAND;
             state = WAITING_FOR_COMMAND;

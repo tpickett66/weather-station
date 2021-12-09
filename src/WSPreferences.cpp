@@ -79,3 +79,26 @@ bool WSPreferences::wiFiHostClear() {
     return preferences.remove(HOST_KEY);
 }
 /* WiFi Hostname methods */
+
+/* mqtt Hostname methods */
+bool WSPreferences::mqttHostSet() {
+    return preferences.isKey(MQTT_HOST_KEY);
+}
+
+size_t WSPreferences::mqttHostStore(char *host) {
+    return preferences.putString(MQTT_HOST_KEY, host);
+}
+
+size_t WSPreferences::mqttHostLoad(char *buf){
+    if (mqttHostSet()) {
+        return preferences.getString(MQTT_HOST_KEY, buf, 63);
+    } else {
+        strcpy(buf, "weather-station");
+        return 15;
+    }
+}
+
+bool WSPreferences::mqttHostClear() {
+    return preferences.remove(MQTT_HOST_KEY);
+}
+/* mqtt Hostname methods */
