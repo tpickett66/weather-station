@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <ctime>
 
 #include <Arduino.h>
 //#include <ESPmDNS.h>
@@ -14,6 +15,9 @@
 #include "WSPreferences.h"
 
 U8X8_SH1106_128X64_NONAME_HW_I2C u8x8(U8X8_PIN_NONE);
+
+const char* ntpServer = "pool.ntp.org";
+const char* timeZone = "America/Chicago";
 
 #define BME_CHIP_ID 0x60
 BME280 bme280;
@@ -67,6 +71,18 @@ void setup() {
 
         Serial.println(WiFi.localIP());
     }
+
+    configTzTime(timeZone, ntpServer);
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) {
+        Serial.println("Unable to get current time!");
+    } else {
+        Serial.println(asctime(&timeinfo));
+        Serial.println(&timeinfo, "%A, %B %d %Y %I:%M:%S %Z");
+        char unix[32];
+        sprintf(unix, "unix: %ld", mktime(&timeinfo));
+        Serial.println(unix);
+    };
 
     Wire.begin();
     Wire.setClock(400000);
